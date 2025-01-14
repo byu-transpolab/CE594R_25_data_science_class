@@ -1,10 +1,8 @@
 ## Instructions
 
-## Save this in your github repository 'inclass' folder as baseR_1_finisher.R
+## Save this in your github repository 'inclass' folder as INClass_02_R_basics[last_name].R
 ## Follow the instructions in the comments below to add content to the r script
 ## Commit and push your changes to github repository
-## Create an issue in your github repository, 
-## and use the @darrell_sonntag to flag to let me know you have completed your first inclass assignment
 ## Submit the link to your github repository in learning suite (to get credit for doing it)
 
 
@@ -48,7 +46,7 @@
 ## use the print function() to view it
 
 
-## we can do math our our number
+## we can do math on our number
 ## What's 3*my_number?
 
 
