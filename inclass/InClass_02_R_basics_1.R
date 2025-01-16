@@ -1,11 +1,9 @@
 ## Instructions
 
-## Save this in your github repository 'inclass' folder as baseR_1_finisher.R
+## Save this in your github repository 'inclass' folder as InClass_02_R_l[lastname].R
 ## Follow the instructions in the comments below to add content to the r script
 ## Commit and push your changes to github repository
-## Create an issue in your github repository, 
-## and use the @darrell_sonntag to flag to let me know you have completed your first inclass assignment
-## Submit the link to your github repository in learning suite (to get credit for doing it)
+## Submit the note/link to your github repository in learning suite (to get credit for doing it)
 
 
 ### This is an R script
