@@ -1,10 +1,5 @@
 ## Instructions
 
-## Save this in your github repository 'inclass' folder as INClass_02_R_basics[last_name].R
-## Follow the instructions in the comments below to add content to the r script
-## Commit and push your changes to github repository
-## Submit the link to your github repository in learning suite (to get credit for doing it)
-
 
 ### This is an R script
 

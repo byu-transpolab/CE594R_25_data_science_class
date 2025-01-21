@@ -32,7 +32,7 @@ setwd()
 ## put the directory address in quotes in the setwd()
 ## Note you need to use double back slashes '\\' or a single forward slash '/'
 
-
+## You can also use the R Studio -> Session -> Set Working Directory
 
 
 #######
@@ -62,8 +62,8 @@ setwd()
 # importing data
 #######
 
-## download the crash2019.csv data from InClass4.R basics R in learning suite
-## save it to your /data folder within your CE594R repository
+## download the crash2019.csv data from data folder in the data folder in the 
+## CE594R_25_data_science_class repository
 
 # Assign the file to a dataframe called crash2019 using the function read.csv()
 ## If the file is stored in the working directory, we could just pass the file name
@@ -78,7 +78,7 @@ setwd()
 
 ### Next we will use the relative path. 
 ## ./ refers to a folder below the working directory
-## ../ refers to a sister folder up one level from the working directory
+## ../ refers to a folder up one level from the working directory
 
 ## Read in the data using the relative path
 
@@ -208,7 +208,7 @@ library(readxl)
 ## read in the first tab of following excel file 
 ## "ozone Data_corrected.xlsx" 
 ## it is saved in the /data folder of the public class repository
-## CE594R_data_science_R\\data\\Ozone Data_corrected.xlsx
+## CE594R_25_data_science_R\\data\\Ozone Data_corrected.xlsx
 
 ## Rather than moving it to my other repository, I can grab it from the public repository
 ## I can move up a directory using the ..\\
