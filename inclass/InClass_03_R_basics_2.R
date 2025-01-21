@@ -35,10 +35,13 @@
 # [ or [[ ?
 
 
-
 # “If list x is a train carrying objects, then x[[5]] is the object in car 5; 
 # x[4:6] is a train of cars 4-6.”
 # http://adv-r.had.co.nz/Subsetting.html#data-types
+
+
+## If you want to subset some of the lists use [], 
+## if you want just one list or one component of one list use [[]]
 
 # Return the third component of the list stored as the first component of list2
 

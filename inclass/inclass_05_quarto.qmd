@@ -1,0 +1,178 @@
+---
+title: "InClass 05"
+author: "Darrell Sonntag"
+date: "2024-01-03"
+output: html
+---
+
+## Quarto
+
+This is an Quarto Markdown document.
+
+Here's a code chunk called summary-stats
+
+Hit the green play button to run the code chunk
+
+```{r}
+#| label: summary-stats
+#| include: false
+
+#Valid R code goes here
+x <- 1:10    # create an x variable
+y <- 10:1    # create a y variable
+dataf <- data.frame(x = x, y = y)
+
+summary(dataf)
+```
+
+
+Q: What are 3 differences between Markdown Files and scripts? A:
+
+1.  Quarto files have text outside of code chunks (generally) and script files need to have text always commented (#) out.
+2.  Script files output code results in the console, whereas quarto files output in the console and right below the code chunk.
+3.  Quarto files are made to be rendered whereas script files are not.
+
+See the work flow here: <https://quarto.org/docs/get-started/hello/rstudio.html#how-it-works>
+
+## Including Plots
+
+You can also embed plots, for example:
+
+We can refer to the name of our plot using @fig-plotxy.
+Set echo=True for the first plot
+
+
+
+For labels, use "fig-name" for figures, use "tbl-name" for tables. There is more information on options here: <https://quarto.org/docs/reference/cells/cells-knitr.html>
+
+Set echo=False for the second plot. 
+
+
+
+Note that the `echo: FALSE` parameter prevents printing of the R code that generated the plot. We will see that later after we Render.
+
+
+[Markdown Basics](https://quarto.org/docs/authoring/markdown-basics.html)
+
+### Meaning of Hashtags
+
+Hashtags are used for headings
+
+Here it shows the font size for headings. Comments don't need to be commented out.
+
+# Heading 1
+
+## Heading 2
+
+### Heading 3
+
+#### Heading4
+
+##### Heading 5
+
+###### Heading 6
+
+### bullets
+
+-   item 1
+-   item 2
+    -   sub-item 2
+    -   sub-item 3
+-   item 3
+-   item 4
+
+### numbered lists
+
+1.  item 1
+2.  item 2
+    -   sub-item 2
+    -   sub-item 3
+3.  item 3
+4.  item 4
+5.  item 5
+
+
+Add another item and sub itme to the list above
+
+
+
+<!-- Note, you don't need to have the order of the numbers correct in the source file -->
+
+<!-- You can enter a comments using ctr-shift-c (Command + Shift + C on macOS) -->
+
+### Code chunks
+
+To include R code into your quarto doc you simply place your code into a ‘code chunk’. All code chunks start and end with three backticks "\`\`\`". Note, these are also known as ‘grave accents’ or ‘back quotes’ and are not the same as an apostrophe! On most keyboards you can find the backtick on the same key as tilde (\~).
+
+From <https://intro2r.com/r-markdown-anatomy.html>
+
+To add a code chunk, click the green +C square above, or Code-\> Insert Chunk.
+
+### Add a code chunk below
+
+make a dataframe of your family's names and ages, and calculate the mean age all in one chunk
+
+
+You can also embed R code into text. Surround it with the back quotes and then add the R code.
+
+<https://quarto.org/docs/get-started/computations/rstudio.html#inline-code>
+
+For example, the mean age of my family is `{r} mean(family$age)`.
+Or you can say it like this:  `{r} mean_family` is the mean age of my family.
+
+### Formatted tables
+
+#### Using Visual editor
+
+-   Click the "Visual" button in R studio to get a preview, then select Insert Table,
+
+-   Insert a table with two columns, and the number of people in your family. Add their names and ages
+
+#### Using a package
+
+Now print a nice formatted table using the knitr package
+
+-   Load the library
+
+-   Options on the kable function are provided here:
+
+<https://bookdown.org/yihui/rmarkdown-cookbook/tables.html>
+
+
+Note there are other packages for plotting tables, one that I like is tinytable <https://vincentarelbundock.github.io/tinytable/man/tt.html>
+
+
+
+You can then refer to your table in the text. As shown in @tbl-family2 my family is young.  
+
+
+
+### Add a formatted equation
+
+Equations are formatted using LaTeX style
+
+An overview of LaTex are here
+
+<https://pages.uoregon.edu/torrence/391/labs/LaTeX-cheat-sheet.pdf> <https://rmd4sci.njtierney.com/math> And cheat sheet is located in the class repository (and hard copy)
+
+Add a code chunck to calculate the distance of vehicle traveling at constant acceleration and initial speed the following equation to calculate
+
+<!-- d=v*t+(1/2)a*t^2 -->
+
+Note this is how you comment out text in quarto Ctrl + Shift + C Note the predecessor to Quarto is Rmarkdown. Most of the commands that work for Rmarkdown work for Quarto.
+
+<https://bookdown.org/yihui/rmarkdown-cookbook/comments.html>
+
+Solve for d when\
+v is 4 m/s, t is 10 sec, and a is 1 m/s
+
+Now print out the equation you used
+
+
+
+You can also refer to an equation in the text. Distance is calculated using @eq-distance.
+
+Now print out the equation for the volume of a sphere
+
+
+Now Render the document to an html
