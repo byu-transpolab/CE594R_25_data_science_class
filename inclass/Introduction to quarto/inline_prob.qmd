@@ -1,0 +1,15 @@
+---
+title: "Inline prob"
+engine: knitr
+---
+
+
+```{r}
+#| label: load-packages
+#| echo: false
+
+library(ggplot2)
+```
+
+There are `{r} nrow(mpg)` observations in our data.
+There are `r nrow(mpg)` observations in our data.

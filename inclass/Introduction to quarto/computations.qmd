@@ -1,5 +1,6 @@
 ---
 title: "Quarto Computations"
+engine: knitr
 ---
 
 This dataset contains a subset of the fuel economy data from the EPA.
@@ -23,3 +24,5 @@ ggplot(mpg, aes(x = hwy, y = cty, color = cyl)) +
   scale_color_viridis_c() +
   theme_minimal()
 ```
+
+There are `r nrow(mpg)` observations in our data.
