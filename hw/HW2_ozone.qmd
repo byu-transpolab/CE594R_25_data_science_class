@@ -76,9 +76,7 @@ Display the equation of the Indoor/Outdoor (I/O) ratio using LaTeX in an equatio
 
 We used the following equation to calculate the indoor/outdoor ratio. 
 
-$$
-Indoor/Outdoor \: O_3 \: ratio = \frac{Indoor \: O_3 \: Concentration}{Outdoor \: O_3 \: Concentration}
-$$
+
 
 ```{r}
 
