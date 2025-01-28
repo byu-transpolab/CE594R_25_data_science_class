@@ -1,0 +1,368 @@
+---
+title: "InClass_06_tidyverse"
+author: "Darrell Sonntag"
+date: "2024-01-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+```
+
+## The tidyverse packages
+
+<https://www.tidyverse.org/packages/>
+
+Share tidyverse cheat-sheets in class
+
+
+# We will be using our family data.frame we used in our InClass_03_exercise 
+
+You can re-create it here. It has a column called 'name', and a column called 'age'.
+
+```{r}
+name <- c("Darrell", "Amy", "Elisa","Lydia","Emmy")
+age <- c(42, 42, 15, 13, 11)
+family <- data.frame(name, age)
+```
+
+# Make a vector called "age" that stores the ages of those family members in the same order. 
+
+We will start with dplyr
+
+## Piping
+
+In dplyr the symbol %>% is referred to as a pipe. 
+
+> x %>% f(y) becomes f(x,y)
+
+For example, calculate the mean age of your family
+
+```{r}
+mean(family$age)
+```
+
+Now do it using the piping function
+
+```{r}
+family$age %>%
+mean()
+```
+
+Another example, create a subset of the family, to just look at the kids. All the kids under age 20
+
+```{r}
+kids <- filter(family, age<20)
+print(kids)
+```
+
+Now do this using the piping function
+
+```{r}
+kids <- family %>%
+        filter(age<20)
+print(kids)
+```
+
+The cool thing about piping is that we can built upon it. 
+Filter your family to those younger than 20, and just select the names
+
+
+```{r}
+kid_names <- family %>%
+                filter(age<20) %>%
+                select(name) 
+
+print(kid_names)
+```
+
+## introduce joining, bind_rows, bind_cols
+
+create another data.frame called family2 (extended family?)
+
+Have a column called name, and a column called age
+
+
+```{r}
+family2 <- data.frame(name = c('Paul','Carol','Alison','David','Stephanie'),age = c(79,76,46,44,39))
+```
+
+Then create a new table by stacking the family and family2 data.frames together using the function bind_rows(). Call it family_extended
+
+```{r}
+family_extended <- bind_rows(family,family2)
+```
+
+Do the same thing, but use the piping operator %>%
+
+```{r}
+family_extended <- family %>%
+                   bind_rows(family2)
+```
+
+Create a new data.frame called 'city' with each family name, and their 
+city. Put the extended family names first
+
+```{r}
+city <- data.frame(name = c('Paul','Carol','Alison','David','Stephanie','Darrell','Amy','Elisa','Lydia','Emmy'),city = c(rep('Fruit Heights',2),'Boise',rep('Farmington',2),rep('Mapleton',5)))
+
+```
+
+Create a new data frame, called 'family_extended_city' by 
+binding the city to your family_extended using bind_cols()
+
+```{r}
+family_extended_city <- family_extended %>%
+                        bind_cols(city)
+
+```
+
+Did it work?
+
+Now Create a new data frame, called 'family_extended_city' by 
+joining the city to your family_extended using full_join()
+
+```{r}
+family_extended_city <- family_extended %>%
+                        full_join(city,by='name')
+
+```
+
+The rows don't need to be the same length for a join
+Create a data.frame called state.city with a column for city and state. Add at least one extra city state combination.  
+
+```{r}
+state.city <- data.frame(city=c('Mapleton','Fruit Heights','Farmington','Provo','Boise'), state = c(rep('UT',4),'ID'))
+```
+
+Join family_extended_city with state.city
+
+
+```{r}
+family_extended_city_state <- family_extended_city %>%
+                        left_join(state.city,by='city')
+
+```
+Which join to use? (left, right, inner, or full?)
+
+left
+
+Which column should did join by?
+
+city
+
+
+Calculate a new column called 'year_born' from the age
+
+```{r}
+
+family_extended_city_state['year_born'] <- 2023-family_extended_city_state['age']
+
+```
+
+Now calculate 'year_born'  the tidyverse way using mutate
+
+```{r}
+family_extended_city_state <- mutate(family_extended_city_state, year_born = 2023-age)
+```
+
+### if else statements
+
+We could have used an if_else() statement to add the State name.
+Use that approach
+
+```{r}
+family_extended_city_state <- family_extended_city %>%
+                              mutate(state=if_else(city=='Boise','ID','UT'))
+
+```
+
+I often like to use joins, rather than using if_else statements, especially if we had lots of city and state combinations. I think a table is easier to use, then a complex if statement. 
+
+##
+
+But there are often cases, where if_else statements make more sense. 
+
+Using an if_else statement to add a column called life_stage with either adult, adolescent, or child as values. Have the life_stage = 'child' if their age is <13, teenager < 20, and adult for 20 and older.
+
+```{r}
+family_extended_city_state <- family_extended_city_state %>%
+                              mutate(life_stage = if_else(age<13,'child',
+                                                          if_else(age<20,'teenager','adult')))
+                                                                  
+```
+
+
+Now go from family, bind family2, join  city and the the state, and add columns year_born, life_stage all in one step using piping %>%
+
+```{r}
+family_extended_city_state <- family %>%
+                              bind_rows(family2) %>%
+                              full_join(city,by='name') %>%
+                              left_join(state.city,by='city') %>%
+                              mutate(year_born = 2023-age) %>%
+                              mutate(life_stage = if_else(age<13,'child',
+                                                     if_else(age<20,'teenager','adult')))
+                              
+                          
+```
+
+Other tips, you can arrange rows and relocate columns, 
+Arrange the data by year_born and then age
+Order the columns, using the select statement by name,age,year_born,life_stage,city,state
+
+
+```{r}
+family_extended_city_state <- family %>%
+                              bind_rows(family2) %>%
+                              full_join(city,by='name') %>%
+                              left_join(state.city,by='city') %>%
+                              mutate(year_born = 2023-age) %>%
+                              mutate(life_stage = if_else(age<13,'child',
+                                                     if_else(age<20,'teenager','adult'))) %>%
+                              arrange(year_born,age) %>%
+                              select(name,age,year_born,life_stage,city,state)
+
+```
+
+## What's cool about tidyverse?
+
+- Vectorized functions (don't need to use for or while loops) 
+  - [What are vectorized functions](https://smogdr.github.io/edar_coursebook/rprog4.html)
+- Functions are human readable (join, arrange, mutate)
+- Can write compact code that you can follow
+- Don't need to create intermediate files
+- Don't need to have such long names for my files 
+    - For example, family_extended_city_state isn't needed because there are no longer a bunch of intermediate files
+
+## Summarize functions
+
+Use the summary function to summarize the family_textended_city_state
+
+```{r}
+summary(family_extended_city_state)
+```
+
+
+Calculate the mean using the summarize function
+
+```{r}
+
+mean_age <- summarize(family_extended_city_state,
+                      mean_age = mean(age))
+
+print(mean_age)
+```
+Or we could have just calculated the mean by using the mean
+
+```{r}
+
+mean_age <- mean(family_extended_city_state$age)
+
+print(mean_age)
+```
+Q: What's the difference?
+A: 1) summarize returns a data.frame, the mean function returns a value
+   2) summarize can calculate summaries using multiple functions and multiple columns
+
+
+Now calculate the mean age, mean year born, and the number of observations using the summarize statement
+```{r}
+
+mean_age <- summarize(family_extended_city_state,
+                      mean_age = mean(age), mean_year_born = mean(year_born), people = n())
+
+print(mean_age)
+```
+
+Calculate mean, min, and max age
+
+```{r}
+family_sum <- family_extended_city_state %>%
+                summarize(
+                     mean_age = mean(age),min_age=min(age),max_age=max(age))
+print(family_sum)
+```
+## Grouping calculate the average, min and max, and count n(), by by life_stage
+
+Use group_by()
+
+```{r}
+family_sum <- family_extended_city_state %>%
+                group_by(life_stage) %>%
+                summarize(
+                     mean_age = mean(age),min_age=min(age),max_age=max(age), count=n())
+print(family_sum)
+```
+
+You can group by multiple variables,
+
+group by life stage and city
+```{r}
+family_sum <- family_extended_city_state %>%
+                group_by(life_stage,city) %>%
+                summarize(
+                     mean_age = mean(age),min_age=min(age),max_age=max(age), count=n())
+print(family_sum)
+```
+
+Note about working directories in Rmarkdown
+
+The working directory within each code chunk is by default the location where the .RMD file is saved.
+
+Info on the working directory in .rmd is here:
+
+<https://bookdown.org/yihui/rmarkdown-cookbook/working-directory.html>
+
+## read in air_passengers.csv data saved in the data folder of the public repository
+
+```{r}
+air_passengers <- read_csv("..\\..\\CE594R_data_science_R\\data\\air_passengers.csv")
+```
+What if you wanted to calculate the mean the passengers by month?
+
+```{r}
+
+air_passengers_summary <- air_passengers %>%
+                          summarize(Jan_mean = mean(Jan),Feb_mean= mean(Feb))
+```
+
+What if you wanted to calculate other summary stats, such as the min, max, sd for each month?
+
+
+Let's first change the format of the table to a long format using pivot_longer() 
+See the tidyr cheat sheet!
+
+```{r}
+
+?pivot_longer()
+
+air_passengers_long <- pivot_longer(air_passengers,cols=2:13,names_to='month',values_to='passengers')
+```
+
+Now calculate the max,min, max, and sd for each month
+
+```{r}
+
+air_passengers_summary <- air_passengers_long %>%
+                          group_by(month) %>%
+                          summarize(mean = mean(passengers), min=min(passengers),max=max(passengers),sd=sd(passengers))
+```
+
+It worked!... except I don't like how the months aren't ordered right.
+
+How can we fix that?
+Mutate month using factor(), specify the levels and order of the months
+
+```{r}
+
+air_passengers_summary <- air_passengers_long %>%
+                          mutate(month = factor(month,levels=c('Jan', 'Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec')),ordered=T) %>%
+                          group_by(month) %>%
+                          summarize(mean = mean(passengers), min=min(passengers),max=max(passengers),sd=sd(passengers))
+```
+
+
