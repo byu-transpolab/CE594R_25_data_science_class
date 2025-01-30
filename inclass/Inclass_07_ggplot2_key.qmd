@@ -1,0 +1,513 @@
+---
+title: "Inclass_07_ggplot2"
+author: "Darrell Sonntag"
+date: "2024-01-23"
+output: html
+---
+
+```{r}
+#| include: False
+
+ 
+library(tidyverse)
+```
+
+Introduction to Exploratory data analysis
+<https://r4ds.hadley.nz/eda>
+
+
+We are going to plot the data mpg
+
+```{r}
+View(mpg)
+str(mpg)
+```
+
+```{r}
+summary(mpg)
+```
+
+## Introduction to ggplot2
+
+There is a good introduction to ggplot2 here: (Vokens 2023)
+
+<https://smogdr.github.io/edar_coursebook/dataviz.html>
+
+4.3 Steps to create a ggplot
+
+Some of the initial  text is taken and some of the example code is from Volkens, 2023: 
+
+
+## First try
+
+- We will create a ggplot2 object
+  - Assign the data to plot
+  - Assign aesthetics (tell R to plot the class on the x-axis)
+- Make a bar plot with the counts of each of the vehicles by class using geom_bar 
+
+
+```{r}
+# use ggplot() to map the data and a single aesthetic (variable = class)
+plot.object <- ggplot(data = mpg, aes(x = class)) + 
+  geom_bar() # call to a specific geom to plot the mapped data
+
+print(plot.object)
+```
+You don't need to assign the graphic to an object. If we just run the code, R will print the object. Just like if we put 2+2. R would print 4 for us. 
+Often we run graphics code just like this:
+
+```{r}
+ggplot(data = mpg, aes(x = class)) + 
+  geom_bar() 
+```
+
+Let's add another aesthetic
+Let's add fill color, to be assigned to the drv variable (front, rear or 4-wheel drive)
+
+
+```{r}
+plot.object <- ggplot(data = mpg, aes(x = class, fill=drv))+
+              geom_bar() 
+print(plot.object)
+```
+
+Common aesthetics in R:
+
+- x	Variable to plot on x-axis
+- y	Variable to plot on y-axis
+- shape	Shape of the element being plotted
+- color	Color of border of elements
+- fill	Color of inside of elements
+- size	Size of the element
+- alpha	Transparency (1: opaque; 0: transparent)
+- linetype	Type of line (e.g., solid, dashed)
+
+
+## Notes on aes()
+
+Aes arguments can be provided either in the ggplot function, or within the geom_function. 
+If they are provide in the ggplot function, then the following geom_function inherits the aes from htem. 
+
+```{r}
+# call to ggplot() with aes() specified in main call
+ggplot(data = mpg, aes(x = class, fill = drv)) +
+geom_bar()
+
+# call to ggplot() with aes() specified in geom
+ggplot(data = mpg) +
+geom_bar(aes(x = class, fill = drv))
+
+# call to ggplot() with a mix of aes() mappings 
+ggplot(data = mpg, aes(x = class)) +
+geom_bar(aes(fill = drv))
+
+# call to ggplot() with all mappings in the geom 
+ggplot() +
+geom_bar(data = mpg, aes(x = class, fill = drv))
+
+
+```
+Q: What happens if you specify the color "darkgreen" outside of the aes in the geom_bar?
+
+A: It overrides the aes argument
+
+```{r}
+# call to ggplot where one `fill` overrides another
+ggplot(data = mpg, aes(x = class, fill = drv)) +
+  geom_bar(fill = "darkgreen")
+```
+What happends if you put "darkgreen" in the aes?
+
+```{r}
+# call to ggplot where one `fill` overrides another
+ggplot(data = mpg, aes(x = class, fill = "darkgreen")) +
+  geom_bar()
+```
+Why isn't it green?
+- R maps a character vector called 'darkgreen' to be the object that assigns color. 
+- Everything in the dataset is matched to 'darkgreen', so MOVES uses the first color in the default color palette to all the observations. 
+
+
+## Explore uni-variate data
+
+Plot a histogram of the hwy fuel economy for all the vehicles
+
+```{r}
+ggplot(data = mpg, aes(x =hwy)) + 
+  geom_histogram() 
+```
+We can look at geom_histogram to find different options
+
+```{r}
+?geom_histogram
+```
+
+We can change the number of bins. Change the number of bins to 40
+
+```{r}
+ggplot(data = mpg, aes(x =hwy)) + 
+  geom_histogram(bins=40) 
+```
+Now, create a histogram and set the binwiddth to be every 2 mpg
+
+```{r}
+ggplot(data = mpg, aes(x =hwy)) + 
+  geom_histogram(binwidth=2) 
+```
+Add blue color borders, and change the fill to 'lightgrey'
+
+```{r}
+ggplot(data = mpg, aes(x =hwy)) + 
+  geom_histogram(binwidth=2,color='blue',fill='lightgrey') 
+```
+
+Change the background to be black and white. Use the theme options
+
+A comprehensive list of items to change with the theme are listed here: 
+
+<https://ggplot2.tidyverse.org/reference/theme.html>
+
+
+```{r}
+ggplot(data = mpg, aes(x =hwy)) + 
+  geom_histogram(binwidth=2,color='blue',fill='lightgrey') +
+  theme(panel.background = element_rect(fill = "white"))
+```
+Easier to just use a theme that has already setup up everything: 
+
+
+```{r}
+ggplot(data = mpg, aes(x =hwy)) + 
+  geom_histogram(binwidth=2,color='blue',fill='lightgrey') +
+  theme_bw()
+```
+You can also create your own theme, or use themes from others
+
+<http://www.sthda.com/english/wiki/ggplot2-themes-and-background-colors-the-3-elements>
+
+
+```{r}
+ggplot(data = mpg, aes(x =hwy)) + 
+  geom_histogram(binwidth=2,color='blue',fill='lightgrey') +
+  theme_bw()
+```
+
+
+Add a better label for the x and y
+
+```{r}
+ggplot(data = mpg, aes(x = hwy)) + 
+  geom_histogram(binwidth=2,color='blue',fill='lightgrey') +
+  theme_bw()+
+  labs(x='Highway Fuel Economy, mi/gal', y='Number of Vehicle Models')
+```
+
+Change the axis tick marks using Scales, 
+See scale_x_continuous, axis tick marks and labels every 4 mpg
+scale_y_continuous add  number of vehicle models every 10
+
+```{r}
+ggplot(data = mpg, aes(x = hwy)) + 
+  geom_histogram(binwidth=2,color='blue',fill='lightgrey') +
+  theme_bw()+
+  labs(x='Highway Fuel Economy, mi/gal', y='Number of Vehicle Models')+
+  scale_x_continuous(breaks = seq(10,46,by=4))+
+  scale_y_continuous(breaks = seq(0,40,by=10))
+```
+
+## export plots
+
+You really like your plot and want to put it into an email to share with your friend. 
+
+by default ggsave saves the last plot to your working directory
+
+use ggsave to save to a the figs directory within your personal repository
+
+```{r}
+ggsave("..//figs//hwy.histogram.png",width=6,height=4)
+```
+
+## density plots
+
+Now make a plot of the hwy fuel economy using the geom_density
+- the y axis is now the distribution, rather than the count
+- make sure you y axis is now labeled as a distribution
+
+```{r}
+ggplot(data = mpg, aes(x = hwy)) + 
+  geom_density() +
+  theme_bw()+
+  labs(x='Highway Fuel Economy, mi/gal', y='Distribution of Vehicle Models')+
+  scale_x_continuous(breaks = seq(10,46,by=4))
+  
+```
+Add a light-blue fill to the histogram
+
+
+```{r}
+ggplot(data = mpg, aes(x = hwy)) + 
+  geom_density(alpha=0.5,fill='lightblue') +
+  theme_bw()+
+  labs(x='Highway Fuel Economy, mi/gal', y='Distribution of Vehicle Models')+
+  scale_x_continuous(breaks = seq(10,46,by=4))
+```
+- Extend the limits to 0. 
+- Three options:
+1. You can specify limits within + scale_x_continuous(limits = c(0,46))
+2. + coord_cartesian(xlim=c(0,100))
+3. + expand_limits(x=0), this is good if you just want to include 0, or an upper bound. 
+
+- See Zooming on the ggplot cheat sheet
+
+```{r}
+ggplot(data = mpg, aes(x = hwy)) + 
+  geom_density(alpha=0.5,fill='lightblue') +
+  theme_bw()+
+  labs(x='Highway Fuel Economy, mi/gal', y='Distribution of Vehicle Models')+
+  scale_x_continuous(breaks = seq(0,50,by=4),limits=c(0,50))
+```
+
+- In this case they will all work. 
+
+- What if you wanted to zoom in on the peak between 20 and 30 mpg?
+
+- Use coord_cartesian(xlim=c())
+
+```{r}
+ggplot(data = mpg, aes(x = hwy)) + 
+  geom_density(alpha=0.5,fill='lightblue') +
+  theme_bw()+
+  labs(x='Highway Fuel Economy, mi/gal', y='Distribution of Vehicle Models')+
+  scale_x_continuous(breaks = seq(0,50,by=4)) +
+  coord_cartesian(xlim=c(20,30))
+```
+- Now set the  limits within 
+
+```{r}
+ggplot(data = mpg, aes(x = hwy)) + 
+  geom_density(alpha=0.5,fill='lightblue') +
+  theme_bw()+
+  labs(x='Highway Fuel Economy, mi/gal', y='Distribution of Vehicle Models')+
+  scale_x_continuous(breaks = seq(0,50,by=4),limits=c(20,30))
+```
+- What's the difference between the three plots with different zooms?
+
+- scale_x_continuous can exclude data from your plot if you specify limits that don't include all your data. Then,  geom_density re-calculated the distribution to sum to 1 for just the data between 20 and 30 mpg. 
+
+
+## We can use fill colors to look at the data by different discrete varibles
+
+What do you think could be explaining the two "humps" in the distribution?
+- model year (1999 vs 2008)
+- cars vs. trucks? (class)
+
+Plot two different histograms using different fill colors
+- Let's start with model year
+
+names(mpg)
+
+```{r}
+ggplot(data = mpg, aes(x = hwy,fill= year)) + 
+  geom_density(alpha=0.5) +
+  theme_bw()+
+  labs(x='Highway Fuel Economy, mi/gal', y='Distribution of Vehicle Models')+
+  scale_x_continuous(breaks = seq(0,46,by=4), limits=c(0,46))
+```
+Did it work? Why not?
+
+Fill is expecting a factor, not a numeric variable. 
+
+Let's change it. 
+
+```{r}
+mpg <- mpg %>%
+        mutate(year = factor(year))
+
+ggplot(data = mpg, aes(x = hwy,fill= year)) + 
+  geom_density(alpha=0.5) +
+  theme_bw()+
+  labs(x='Highway Fuel Economy, mi/gal', y='Distribution of Vehicle Models')+
+  scale_x_continuous(breaks = seq(0,46,by=4), limits=c(0,46))
+```
+
+Doesn't look like the model year is it. Let's look at class
+
+
+
+```{r}
+ggplot(data = mpg, aes(x = hwy,fill= class))+ 
+  geom_density(alpha=0.5) +
+  theme_bw()+
+  labs(x='Highway Fuel Economy, mi/gal', y='Distribution of Vehicle Models')+
+  scale_x_continuous(breaks = seq(0,46,by=4), limits=c(0,46))
+```
+Does class explain the multiple humps in the main distribution?
+
+It looks like class is explaining the two humps, pickups and SUVs have the lower fuel economy. However, the plot is quite messy. It's hard to distinguish between the purple in suv (from red and blue overlapping) and the purple in suv. 
+
+## Let's look at a different plots that plot all of the data by class. 
+
+We have been looking at summary plots of our data using historgrams and density plots. 
+
+We can also plot all of our our individual data. 
+
+What are the pro's and cons of plotting all the data?
+
+Pros: 
+- Comprehensive
+- Identify problematic data
+
+Cons:
+- Can be overly complex
+- Difficult to see patterns in the data
+
+<https://smogdr.github.io/edar_coursebook/eda1.html#univariate-data-visualization>
+
+## geom_point
+
+```{r}
+ggplot(data = mpg, aes(x=class, y = hwy, color= class)) + 
+  geom_point() +
+  theme_bw()+
+  labs(y='Highway Fuel Economy, mi/gal', x='Vehicle Class')+
+  scale_y_continuous(breaks = seq(0,46,by=4))
+```
+### Position Adjustments
+Add jitter to be able to see all the points
+
+
+
+```{r}
+ggplot(data = mpg, aes(x=class, y = hwy, color= class)) + 
+  geom_point(position="jitter") +
+  theme_bw()+
+  labs(y='Highway Fuel Economy, mi/gal', x='Vehicle Class')+
+  scale_y_continuous(breaks = seq(0,46,by=4))
+```
+Options for geom_jitter are here: <https://ggplot2.tidyverse.org/reference/geom_jitter.html>
+
+Change the jitter width and heigth to a smaller number
+
+```{r}
+ggplot(data = mpg, aes(x=class, y = hwy, color= class)) + 
+  geom_jitter(width=0.3,height=0.3)+
+  theme_bw()+
+  labs(y='Highway Fuel Economy, mi/gal', x='Vehicle Class')+
+  scale_y_continuous(breaks = seq(0,46,by=4))
+```
+I think it is easier to see trends when the data are ordered. Order the classes from worst to best fuel economy. 
+
+```{r}
+hw.mean.by.class <- mpg %>%
+                     group_by(class) %>%
+                     summarize(hwy.mean = mean(hwy,na.rm=T)) %>%
+                     arrange(hwy.mean)
+
+mpg <- mpg %>%
+        mutate(class = factor(class, levels = hw.mean.by.class$class, ordered=T))
+
+ggplot(data = mpg, aes(x=class, y = hwy, color= class)) + 
+  geom_jitter(width=0.3,height=0.3)+
+  theme_bw()+
+  labs(y='Highway Fuel Economy, mi/gal', x='Vehicle Class')+
+  scale_y_continuous(breaks = seq(0,46,by=4))
+```
+### Now let's look at other ways to plot the data, box plots
+
+There's good info on boxplots here: 
+<https://smogdr.github.io/edar_coursebook/eda1.html#box>
+
+```{r}
+ggplot(data = mpg, aes(x=class, y = hwy, color= class)) + 
+  geom_boxplot()+
+  theme_bw()+
+  labs(y='Highway Fuel Economy, mi/gal', x='Vehicle Class')+
+  scale_y_continuous(breaks = seq(0,46,by=4))
+```
+## Let's break and discuss adjusting the colors scales
+
+Let's say I want to change the colors. For example, the yellow is hard to see on the white background.
+
+Good resources on colors:
+- <https://ggplot2-book.org/scales-colour>
+- <http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/#a-colorblind-friendly-palette>
+- <https://www.datanovia.com/en/blog/top-r-color-palettes-to-know-for-great-data-visualization/>
+
+RColorBrewer::display.brewer.all()
+display.brewer.pal()
+
+```{r}
+
+hwy.plot <- ggplot(data = mpg, aes(x=class, y = hwy, color= class)) + 
+            geom_boxplot()+
+            theme_bw()+
+            labs(y='Highway Fuel Economy, mi/gal', x='Vehicle Class')+
+            scale_y_continuous(breaks = seq(0,46,by=4))
+
+hwy.plot
+
+hwy.plot + 
+  scale_color_brewer(palette = 'Set1')
+
+hwy.plot + 
+  scale_color_brewer(palette = 'Paired')
+
+hwy.plot + 
+  scale_color_brewer(palette = 'Spectral')
+
+hwy.plot + 
+  scale_color_manual(values = heat.colors(7))
+
+hwy.plot + 
+  scale_color_manual(values = topo.colors(7))
+
+```
+Set manual colors
+R has many colors
+
+<https://www.datanovia.com/en/blog/awesome-list-of-657-r-color-names/>
+See colors()
+
+
+```{r}
+hwy.plot + 
+  scale_color_manual(values=c('red','blue','green3','orange','purple','tomato','turquoise4'))
+
+```
+
+## We can plot multiple layers on top of each other
+
+Plot all the box plots, and then plot all the observations on top
+
+<https://ggplot2.tidyverse.org/reference/geom_boxplot.html>
+
+```{r}
+
+ggplot(data = mpg, aes(x=class, y = hwy, color= class)) + 
+  geom_boxplot(outlier.shape = NA)+
+  geom_jitter(width=0.3,height=0.3)+
+  theme_bw()+
+  labs(y='Highway Fuel Economy, mi/gal', x='Vehicle Class')+
+  scale_y_continuous(breaks = seq(0,46,by=4))+
+   scale_color_brewer(palette = 'Paired')
+
+```
+## We can also plot different data sets
+
+Plot the raw data (jittered) and the mean value on the same plot with an x for the mean
+
+
+
+```{r}
+
+ggplot(data = mpg, aes(x=class, y = hwy, color= class)) + 
+  geom_jitter(width=0.3,height=0.3)+
+  geom_point(data=hw.mean.by.class,aes(y=hwy.mean), color='black', size = 3, shape=4, stroke=1)+
+  theme_bw()+
+  labs(y='Highway Fuel Economy, mi/gal', x='Vehicle Class')+
+  scale_y_continuous(breaks = seq(0,46,by=4))+
+   scale_color_brewer(palette = 'Paired')
+
+```
+
+
