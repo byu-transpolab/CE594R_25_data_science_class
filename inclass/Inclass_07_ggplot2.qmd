@@ -2,11 +2,12 @@
 title: "Inclass_07_ggplot2"
 author: "Darrell Sonntag"
 date: "2024-01-23"
-output: html_document
+output: html
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
+#| include: False
+
 library(tidyverse)
 ```
 
