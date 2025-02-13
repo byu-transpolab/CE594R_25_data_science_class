@@ -22,12 +22,14 @@ Objectives:
 - Create bivariate plot with UDAQ data, add in linear model fit
 - Include linear correlation plot
 
-- read in the ozone.wide data that we created in HW3. 
+- read in the ozone.wide data that we created in HW2. 
 - Read in my version, just to make sure there are not differences with how they did it for the homework
 
 ```{r}
 
-ozone.wide <- read_csv("..//CE594R_data_science_R//data//ozone.I.O.csv")
+ozone.wide <- read_csv(
+              "..//CE594R_25_data_science_class//data//ozone.I.O.csv") |> 
+              rename(ac.type = `Type of Air Conditioner`) 
 
 ```
 
@@ -42,11 +44,11 @@ Plot the average indoor/outdoor ratio with a separate panel for the homes with d
 names(ozone.wide)
 ```{r}
 
-ggplot(data = ozone.wide,aes(x = House.Number, y = In_Out_ratio,fill=`Type of Air Conditioner`)) + 
+ggplot(data = ozone.wide,aes(x = House.Number, y = In_Out_ratio,fill=ac.type)) + 
   geom_jitter(size=2,alpha=0.9,width=0.2,pch=21,color='black')+
   theme_bw()+
    labs(x='House', y= 'I/O')+
-  facet_grid(.~`Type of Air Conditioner`, scales='free') +
+  facet_grid(.~ac.type, scales='free') +
   coord_cartesian(ylim = c(0, 1)) +
   scale_y_continuous(breaks=seq(0,1,.20))+
   theme(legend.position = 'blank')+
@@ -62,17 +64,34 @@ Sort the House IDs by the size of the mean I/O ratio
 
 ## Calculate means
 
-
+ozone.mean <- ozone.wide |> 
+              group_by(House.Number) |> 
+              summarize(avg.io = mean(In_Out_ratio),count=n()) |> 
+              arrange(avg.io)
 
 ## Make House.Number be a factor, ordered according to the levels of the average indoor outdoor ratio
 
+ozone.wide <- ozone.wide |> 
+              mutate(House.Number =
+              factor(House.Number,levels=ozone.mean$House.Number,
+                     ordered=T)) 
 
-
-
+            
 ```
 Replot
 
 ```{r}
+
+ggplot(data = ozone.wide,aes(x = House.Number, y = In_Out_ratio,fill=ac.type)) + 
+  geom_jitter(size=2,alpha=0.9,width=0.2,pch=21,color='black')+
+  theme_bw()+
+   labs(x='House', y= 'I/O')+
+  facet_grid(.~ac.type, scales='free') +
+  coord_cartesian(ylim = c(0, 1)) +
+  scale_y_continuous(breaks=seq(0,1,.20))+
+  theme(legend.position = 'blank')+
+  theme(axis.text.y = element_text(size=9),axis.text.x = element_text(angle = 90,vjust =0.5, size=8))
+     
 
 
      
@@ -92,11 +111,18 @@ Use a group_by and summarize
 Calculate the t-critical value using
 mutate(tcrit = qt(.975,df=(n-1))) %>% ## two-sided 
 
+?qt
 Print the table using kable
 
 ```{r}
-
-
+t.intervals <- ozone.wide |> 
+               group_by(ac.type) |> 
+               summarize(avg.io = mean(In_Out_ratio),
+                         sd = sd(In_Out_ratio),
+                         n = sum(!is.na(In_Out_ratio))) |> 
+              mutate(tcrit = qt(.995,df=(n-1))) |>  ## two-sided 
+              mutate(lower.bound = avg.io - tcrit*sd/sqrt(n),
+                     upper.bound = avg.io + tcrit*sd/sqrt(n))
 
 ```
 
@@ -106,7 +132,9 @@ Plot the means with the confidence intervals
 - Use geom_errorbar for the confidence intervals
 
 ```{r}
-
+ggplot(t.intervals,aes(x=ac.type,y=avg.io,fill=ac.type))+
+    geom_col()+
+    geom_errorbar(aes(ymin=lower.bound,ymax=upper.bound),width=0.5)
 
 
 ```
@@ -129,7 +157,13 @@ Good overview here (or a statistics text book)
 
 ```{r}
 
+hg <- ggplot(ozone.wide,aes(x=In_Out_ratio,fill=ac.type))+
+      geom_histogram(bins = 12) +
+      geom_density(alpha=0.2)+
+      facet_grid(.~ac.type,scales='free')
 
+
+hg
 ```
 
 - What other plots? quantile-quantile plot
@@ -139,6 +173,24 @@ Good overview here (or a statistics text book)
 <https://library.virginia.edu/data/articles/understanding-q-q-plots>
 
 -  You plot the standard normal values (z-scores) on the x-axis for each percentile point (depends on your n)
+
+$$ Z = \frac{x-\mu}{\sigma} $$
+Reminder of the standard normal distribution is here: 
+<https://online.stat.psu.edu/stat200/book/export/html/124>
+
+Standard normal curves from my statistics text book: 
+<https://www.stat.purdue.edu/~chakrabp/TABLES/tablea3.pdf>
+
+You can order the data (calculate the percentiles or cumulative distribution function), and what z-score is associated with that percentile. 
+
+Then you could plot the actual z-score on the y, and the inferred z-score based on its order on the x-axis. 
+
+If the data is normally distributed, the data should be plotted on a line. 
+
+
+
+
+
 -  You plot the actual value on the y. 
 -  If it is from a normal distributions, the values should approximately fall on a line
 
@@ -171,11 +223,11 @@ plot the z-score on the x-axis, and the In_Out_ration on the y
 
 ```{r}
 ozone.wide.AC <- ozone.wide %>%
-                 filter(`Type of Air Conditioner` == 'Central') %>%
+                 filter(ac.type=='Central') %>%
                  arrange(In_Out_ratio) %>%
                  mutate(ord = seq(1:n())) %>%
                  mutate(percentile = ord/(n()+1)) %>%
-                 mutate(z_score = qnorm(percentile)) ## This calculates the z-score depending on the percentiles, or the inverse of the quantile density function
+                 mutate(z_score = qnorm(percentile)) ## This calculates the z-score depending on the percentiles, or the inverse of the cumulative distribution function for the standard normal distribution
                  
 ggplot(ozone.wide.AC, aes(x=z_score,y=In_Out_ratio)) +
     geom_point()    
@@ -189,7 +241,7 @@ ggplot(ozone.wide.AC, aes(x=z_score,y=In_Out_ratio)) +
 ```{r}
 
 ozone.wide.AC <- ozone.wide %>%
-                 filter(`Type of Air Conditioner` == 'Central') %>%
+                 filter(`ac.type` == 'Central') %>%
                  arrange(In_Out_ratio) %>%
                  mutate(ord = seq(1:n())) %>%
                  mutate(percentile = ord/(n()+1)) %>%
@@ -214,6 +266,13 @@ assign the plot to be qq
 
 ```{r}
 
+qq<- ggplot(ozone.wide, aes(sample=In_Out_ratio,color=ac.type))+
+  geom_qq()+
+  geom_qq_line()+
+  facet_grid(.~ac.type)
+
+
+
 ```
 - Do the data appear to be normally distributed?
 - Central visits looks better than Evaporative visits.
@@ -226,6 +285,7 @@ assign the plot to be qq
 <https://ggplot2-book.org/arranging-plots>
 
 ```{r}
+
 library(patchwork)
 
 hg + qq + plot_layout(ncol = 1)
@@ -239,7 +299,7 @@ What other assumptions do we have?
 - We assumed that our observations were independent random observations from the same population
 - Is that true?
 
-- Are data are not independent observations from the same population. We have several repeat observations from the same homes. These observations appear correlated to one another 
+- Our data are not independent observations from the same population. We have several repeat observations from the same homes. These observations appear correlated to one another 
 - they are clustered together on the graph
 - 
 
@@ -266,7 +326,7 @@ ggplot(data = ozone.wide,aes(x = `Date Sampled`, y = In_Out_ratio,fill=`House.Nu
   geom_jitter(size=2,alpha=0.9,width=0.2,pch=21,color='black')+
   theme_bw()+
    labs(x='House', y= 'I/O')+
-  facet_grid(`Type of Air Conditioner`~ year, scales='free') +
+  facet_grid(ac.type~ year, scales='free') +
   expand_limits(y=0)+ 
   theme(axis.text.y = element_text(size=9),axis.text.x = element_text(angle = 90,vjust =0.5, size=8))
    
