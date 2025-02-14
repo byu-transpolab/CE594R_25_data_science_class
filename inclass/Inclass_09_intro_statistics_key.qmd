@@ -592,7 +592,7 @@ We then calculated average PM2.5 concentrations for each air conditioning type b
 
 4. How did the 95% confidence intervals change from using the minute-by-minute data to using the visit average data?
 
-Which approach is most important for evaluating the differences between the two types of homes?
+Which approach is most appropriate and relevant for evaluating the differences between the two types of homes?
 
 Why?
 
