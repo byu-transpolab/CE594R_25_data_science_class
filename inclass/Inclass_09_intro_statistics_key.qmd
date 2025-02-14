@@ -132,10 +132,12 @@ Plot the means with the confidence intervals
 - Use geom_errorbar for the confidence intervals
 
 ```{r}
-ggplot(t.intervals,aes(x=ac.type,y=avg.io,fill=ac.type))+
+plot.conf.int.1 <- ggplot(t.intervals,aes(x=ac.type,y=avg.io,fill=ac.type))+
     geom_col()+
-    geom_errorbar(aes(ymin=lower.bound,ymax=upper.bound),width=0.5)
+    geom_errorbar(aes(ymin=lower.bound,ymax=upper.bound),width=0.5)+
+    coord_cartesian(ylim = c(0,.8))
 
+plot.conf.int.1
 
 ```
 
@@ -374,13 +376,22 @@ Plot the means with the confidence intervals
 
 ```{r}
 
-ggplot(mean.mean,aes(x=ac.type,y=avg.io.type,fill=ac.type))+
-    geom_col()+
-    geom_errorbar(aes(ymin=lower.bound,ymax=upper.bound),width=0.5)
+plot.conf.int.2 <- ggplot(mean.mean,aes(x=ac.type,y=avg.io.type,fill=ac.type))+
+                  geom_col()+
+                  geom_errorbar(aes(ymin=lower.bound,ymax=upper.bound),width=0.5) +
+                  coord_cartesian(ylim = c(0,.8))
 
+plot.conf.int.2
 
 
 ```
+```{r}
+
+plot.conf.int.1 + plot.conf.int.2 + plot_layout(ncol = 2)
+
+```
+
+
 
 
 
@@ -409,22 +420,186 @@ t.test.ozone[["p.value"]]
 ```{r}
 library(ggsignif)
 
-ggplot(mean.mean,aes(x=ac.type,y=avg.io.type,fill=ac.type))+
-    geom_col()+
-    geom_errorbar(aes(ymin=lower.bound,ymax=upper.bound),width=0.5)+
-    geom_signif(data = mean.ozone, aes(y=avg.io,x=ac.type), comparisons=list(c('Central','Evap')),
-              map_signif_level=TRUE,test='t.test',
-              color='black',vjust=1.5,margin_top=0.1)
+plot.conf.int.2 <- ggplot(data = mean.mean, aes(y=avg.io.type,x=ac.type,fill=ac.type))+
+                    geom_col()+ 
+                    geom_errorbar(aes(ymin=lower.bound,ymax=upper.bound),width=0.5)+
+                    geom_signif(data = mean.ozone, aes(y=avg.io,x=ac.type), comparisons=list(c('Central','Evaporative')),
+                                map_signif_level=FALSE,test='t.test',
+                                color='black',vjust=1.5,margin_top=0.1)
+
+plot.conf.int.2
 
 ```
+
+
+
+
+What's another issue with independence. 
+Serial correlation (correlation with time)
+
+Let's look at the data from HW4
+
+What is the mean concentration of the indoor PM2.5 concentrations for each season by different homes
+
+Use the minute-by-minute data
+
 ```{r}
-ggplot(data = mean.mean, aes(y=avg.io.type,x=ac.type,fill=ac.type))+
-  geom_col()+ 
-  geom_errorbar(aes(ymin=lower.bound,ymax=upper.bound),width=0.5)+
-  geom_signif(data = mean.ozone, aes(y=avg.io,x=ac.type), comparisons=list(c('Central','Evaporative')),
-              map_signif_level=FALSE,test='t.test',
-              color='black',vjust=1.5,margin_top=0.1)
+
+SidePak.minute.qa  <- read_csv("..//CE594R_data_science_R//data//SidePak.minute.qa.csv")
 ```
+Calculate the means and 95% confidence intervals
+
+names(SidePak.minute.qa)
+
+```{r}
+SidePak.mean.summary <- SidePak.minute.qa %>%
+    #ungroup() %>%
+    group_by(ac.type, season, Location) %>%
+    summarize(Aerosol_mean = mean(Aerosol_ug_m3),
+            sd = sd(Aerosol_ug_m3),
+            n = sum(!is.na(Aerosol_ug_m3))) %>%
+  mutate(tcrit = qt(.975,df=(n-1))) %>% ## two-sided 
+  mutate(bound = tcrit*sd/sqrt(n)) %>%
+  mutate(lower.95 = Aerosol_mean-bound) %>%
+  mutate(upper.95 = Aerosol_mean+bound ) 
+
+```
+Plot the geom_bar
+```{r}
+PM_1 <- ggplot(data=SidePak.mean.summary,
+        aes(x=ac.type, y= Aerosol_mean, fill=Location))+
+        geom_col()+
+        geom_errorbar(aes(ymin=lower.95,ymax=upper.95,width=0.25))+
+        theme_bw()+
+        facet_grid(Location~season,scales='free_y') +
+        labs(y='PM2.5 concentration (ug/m3)') +
+        geom_text(y=3,aes(label=paste("n=",n))) +     ## also plot our number of observations?
+        coord_cartesian(ylim = c(0,30))
+PM_1
+
+```
+
+
+
+Are the error bars correct? Is this what we want?
+
+What's the matter?
+
+
+
+What do we really want? We want the average of concentration of the average house visit. 
+
+First calculate the mean concentration for each house visit
+
+```{r}
+SidePak.visit.sum <- SidePak.minute.qa %>%
+                      ungroup() %>%
+                      group_by(House.Number,Visit,House.Number.Visit,ac.type,season, Location) %>%
+                      summarize(Aerosol_ug_m3= mean(Aerosol_ug_m3,na.rm=T),
+                                Date = min(Date),Start_time = min(round.date.time))
+
+```
+
+Evaluate the independence of the home visit means
+
+```{r}
+SidePak.visit.sum <- SidePak.visit.sum %>%
+  mutate(measurement = ifelse(season == 'Summer' & 
+                                House.Number %in% c('H03','H08','H14','H16','H19','H26'),
+                              'repeat','single')) %>%
+  mutate(house.number.visit = paste(House.Number,Visit,sep=" ")) 
+
+```
+
+
+Plot the repeats. 
+```{r}
+ggplot(data = SidePak.visit.sum,  aes(y = house.number.visit, x = Aerosol_ug_m3,fill=measurement))+  
+  geom_col(width=0.7)+
+  facet_grid(season+ac.type ~Location,scales='free_y' ,space='free') +
+  scale_fill_brewer(palette = 'Paired')+
+  theme(axis.text = element_text(size = 12)) +
+  labs(x = "Aerosol ug/m3", title='',y='')+
+  theme_bw()+
+  guides(fill=guide_legend(reverse=TRUE)) +
+theme(legend.position = 'bottom')+
+  theme(axis.text.x = element_text(size=10), axis.text.y = element_text(size=10),
+        axis.title = element_text(size = 12),plot.title = element_text(size = 12),
+        strip.text = element_text(size=10),
+        legend.text = element_text(size = 12))  
+```
+
+It appears we have independent observations with the visit means
+
+Now calculate my sample mean and 95% confidence intervals
+
+```{r}
+SidePak.mean.summary.correct <- SidePak.visit.sum %>%
+    #ungroup() %>%
+    group_by(ac.type, season, Location) %>%
+    summarize(Aerosol_mean = mean(Aerosol_ug_m3),
+            sd = sd(Aerosol_ug_m3),
+            n = sum(!is.na(Aerosol_ug_m3))) %>%
+  mutate(tcrit = qt(.975,df=(n-1))) %>% ## two-sided 
+  mutate(bound = tcrit*sd/sqrt(n)) %>%
+  mutate(lower.95 = Aerosol_mean-bound) %>%
+  mutate(upper.95 = Aerosol_mean+bound ) 
+
+
+```
+
+Plot the means and 95% CI
+
+
+```{r}
+PM_2 <- ggplot(data=SidePak.mean.summary.correct,
+      aes(x=ac.type, y= Aerosol_mean, fill=Location))+
+      geom_col()+
+      geom_errorbar(aes(ymin=lower.95,ymax=upper.95,width=0.25))+
+      theme_bw()+
+      facet_grid(Location~season,scales='free_y') +
+      labs(y='PM2.5 concentration (ug/m3)') +
+      geom_text(y=3,aes(label=paste("n=",n))) +
+      coord_cartesian(ylim = c(0,30))
+
+PM_2
+```
+
+```{r}
+PM_1 + PM_2 + plot_layout(nrow=1)
+```
+
+
+
+Questions: 
+
+We calculated the confidence interval of the Indoor/Outdoor Ozone ratio for each air conditiong type using two methods. 
+First, we calculated the average and the confidence intervals using the measured I/O for each visit. Then, we calculated the average for each home, and then calculated the average across homes of each air conditioning type
+
+1. Did the average I/O by AC type change between the two different methods?
+
+
+2. Did the 95% confidence intervals of the average I/O by AC type between the two different methods? How did they change?
+
+  Why?
+  
+Which approach is most appropriate for evaluating the differences between the two types of homes?
+
+
+We then calculated average PM2.5 concentrations for each air conditioning type by season and location (indoor/outdoor) 
+
+3. How did the average PM2.5 concentrations change by season and location (indoor/outdoor) when using the minute-by-minute average data to the visit average data? 
+
+4. How did the 95% confidence intervals change from using the minute-by-minute data to using the visit average data?
+
+Which approach is most important for evaluating the differences between the two types of homes?
+
+Why?
+
+
+
+
+
 
 
 
