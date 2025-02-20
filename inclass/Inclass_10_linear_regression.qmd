@@ -2,9 +2,8 @@
 title: "Inclass_10_linear_regression"
 author: "Darrell Sonntag"
 date: "2024-02-08"
-output: html_document
-editor_options: 
-  chunk_output_type: console
+output: html
+
 ---
 
 ```{r setup, include=FALSE}
@@ -436,14 +435,14 @@ Info on what the sep = text is all about is here: (it's just adding a comma and 
 ```{r}
 #install.packages('ggpmisc')
 library(ggpmisc)
+library(ggplot2)
 
 ggplot(data=ozone.summary.out,aes(y=Ozone.UDAQ.ppb, x=O3.ppb))+
   geom_point(aes(color=Monitor.closest))+
   geom_abline(aes(intercept = 0, slope = 1))+
-  geom_smooth(method = 'lm', formula = y~x) +
-  #stat_poly_line()+
-  stat_poly_eq(aes(label = paste(after_stat(eq.label),
-                                 after_stat(rr.label), sep = "*\", \"*")),size=3)+
+  #geom_smooth(method = 'lm', formula = y~x) +
+  stat_poly_line() +
+  stat_poly_eq(use_label("eq", "R2"),label.y="bottom",label.x="right")+
     labs(x='Outdoor Ozone at each house visit, ppb', y='Ozone at closest UDAQ monitor, ppb')+
   theme_bw()+
   coord_cartesian(xlim=c(18,55),ylim=c(18,55))+
