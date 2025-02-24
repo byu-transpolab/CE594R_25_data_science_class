@@ -161,12 +161,20 @@ Create new dataframe called SidePak
 
 ```
 
-Read in the first sheet of the "Research Data Master List.xlsx" file
+Read in the Housing Survey Answers sheet of the "Research Data Master List.xlsx" file
 stored in the data folder Assign it to a data.frame called ac.data Just
 select the House.Number and the "Type of Air Conditioner" create a new
 shorthand variable called ac.type where Central = AC and Evaporative =EC
 
 ```{r}
+
+
+ac.data <-  read_excel(path = "../../EvapCoolerUtahCounty/Data/Research Data Master List.xlsx", sheet='Housing Survey Answers') %>%
+            select(House.Number,'Type of Air Conditioner') %>%
+            mutate(ac.type = case_when(
+                    `Type of Air Conditioner`== 'Central' ~'AC', 
+                    `Type of Air Conditioner` == 'Evaporative' ~ 'EC')) 
+
 
 ```
 
