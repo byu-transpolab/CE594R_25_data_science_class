@@ -2,7 +2,7 @@
 title: "Inclass_11_resampling"
 author: "Darrell Sonntag"
 date: "2024-02-08"
-output: html_document
+output: html
 ---
 
 ```{r setup, include=FALSE}
@@ -37,7 +37,7 @@ Read in the data
 
 ```{r}
 
-ozone.wide <- read_csv("..//..//CE594R_data_science_R//data//ozone.I.O.csv")
+ozone.wide <- read_csv("..//..//CE594R_25_data_science_class//data//ozone.I.O.csv")
 
 ```
 
