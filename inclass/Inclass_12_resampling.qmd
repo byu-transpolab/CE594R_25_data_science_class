@@ -49,10 +49,10 @@ ozone.wide <- read_csv("..//..//CE594R_25_data_science_class//data//ozone.I.O.cs
 ## and add ac.type
 
 ozone.ave.house <- ozone.wide %>%
+    mutate(ac.type = ifelse(
+              `Type of Air Conditioner`=='Central','AC','EC')) %>% ## add shorthand for ac.type
   group_by(House.Number,ac.type ) %>%
-  summarize(ave_ozone_IO = mean(In_Out_ratio)) %>%
-  mutate(ac.type = ac.type) %>% ## add shorthand for ac.type
-  ungroup() %>% ## we are going to group this using different variables in the future
+  summarize(ave_ozone_IO = mean(In_Out_ratio),.groups='drop') %>%
   arrange(ave_ozone_IO)
 
 ```
