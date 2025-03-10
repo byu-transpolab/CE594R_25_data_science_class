@@ -270,7 +270,7 @@ How many obs do we have now? How many did we lose?
 
 
 
-Fit a linear model to predict the ln(ER) with additive terms for location, model year, and compliance, and interaction terms for each
+Fit a linear model to predict the ln(ER) with additive terms for location, model year, and compliance
 
 ```{r}
 
