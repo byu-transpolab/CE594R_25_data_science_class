@@ -2,9 +2,8 @@
 title: "InClass 13 Nonlinear regression"
 author: "Darrell Sonntag"
 date: "2024-03-03"
-output: html_document
-editor_options: 
-  chunk_output_type: console
+output: html
+
 ---
 
 ```{r setup, include=FALSE}
@@ -16,7 +15,7 @@ library(tidymodels)
 
 Look at the mean model predictions and confidence intervals from HW5
 
-![](../../CE594R_data_science_R/figs/predict_lnER_real_conf.png)
+![](../../CE594R_25_data_science_class/figs/predict_lnER_real_conf.png)
 
 ```{r}
 ggplot(data = predict.lm.ln.NH3,aes(x = Year, color=Compliance, fill=Compliance)) +
@@ -25,7 +24,7 @@ ggplot(data = predict.lm.ln.NH3,aes(x = Year, color=Compliance, fill=Compliance)
     facet_wrap(~location)+
     theme_bw()
 
-#ggsave("../../CE594R_data_science_R/figs/predict_lnER_real_conf.png")
+#ggsave("../../CE594R_25_data_science_class/figs/predict_lnER_real_conf.png")
 ```
 
 What are some issues with our model fitting steps?
@@ -42,7 +41,7 @@ What are some issues with our model fitting steps?
 
 -   You can adjust the 'span' to get a "good smooth"
 
-![](../../CE594R_data_science_R/figs/NH3_smooth.png)
+![](../../CE594R_25_data_science_class/figs/NH3_smooth.png)
 
 ```{r}
 
@@ -53,7 +52,7 @@ ggplot(data = summer.2022.gas.NH3,aes(x = Year, y=ER,color=Compliance)) +
     facet_wrap(~location)+
     theme_bw()
 
-ggsave("../../CE594R_data_science_R/figs/NH3_smooth.png")
+ggsave("../../CE594R_25_data_science_class/figs/NH3_smooth.png")
 
 ```
 
@@ -127,7 +126,7 @@ Read in heavy-duty data from Utah Perry Campaign for 2011 and later trucks
 
 ```{r}
 
-hd.temp <- read_csv("..//..//CE594R_data_science_R//data//HD.UT.TEMP.NOX.csv")
+hd.temp <- read_csv("..//CE594R_25_data_science_class//data//HD.UT.TEMP.NOX.csv")
 
 ```
 
@@ -302,7 +301,7 @@ hd.temp.predict.intervals <-
 ```
 
 
-Question: Why is bootstrapping is a good approach for estimating the uncertainty of the predictions?
+Question: Why is bootstrapping a good approach for estimating the uncertainty of the predictions?
 
 Answer: 
 
@@ -316,17 +315,18 @@ Use geom_jitter to plot the data
 Use geom_line and geom_ribbon to plot the predicted values
 
 ```{r}
-ggplot(,
-  #aes(
-  #geom_jitter( +
-  #geom_line(
-  #geom_ribbon(
-  #facet_wrap() +
-  #labs(x = "Vehicle Age", y = "NOX Emission Rate (g/kg of fuel)")+
-  #scale_color_manual(values = c("24" = "skyblue2", "82.5" = "orange2"))+
-  #theme_bw() +
-  #theme(legend.position = "bottom")+
-  #scale_x_continuous(breaks = seq(0, 12, by = 1))
+
+ggplot(data = hd.temp,aes(x=age,y=ER,color=factor(avg.temp))) +
+  geom_jitter(width=0.2,height = 0) +
+  geom_line(data=   ,aes(y=),color='black',size=1.2) +
+  geom_ribbon(data= ,aes(y=,ymin =`2.5%`, ymax=`97.5%`,alpha=0.3))+
+  facet_wrap(~avg.temp) +
+  labs(x = "Vehicle Age", y = "NOX Emission Rate (g/kg of fuel)")+
+  scale_color_manual(values = c("24" = "skyblue2", "82.5" = "orange2"))+
+  theme_bw() +
+  theme(legend.position = "bottom")+
+  scale_x_continuous(breaks = seq(0, 12, by = 1))
+
 
 ```
 
@@ -379,18 +379,18 @@ Use geom_line and geom_ribbon to plot the predicted values
 
 names(hd.temp)
 
-#ggplot(
-  #aes(
-  #geom_jitter(width = 0.2, height=0) +
-  #geom_line(data = hd.temp.predict.intervals.2, 
-  #          aes(y = .fitted), color = "black", size = 1.2) +
-  #geom_ribbon(data = hd.temp.predict.intervals.2,
-   #           aes(y=.fitted,ymin = `2.5%`,ymax = `97.5%`),alpha=0.3, color='grey') +
-  #facet_wrap(~age, scales='free_y') +
-  #  labs(y = "NOX Emission Rate (g/kg of fuel)")+
-  #scale_color_manual(values = c("24" = "skyblue2", "82.5" = "orange2"))+
-  #theme_bw() +
-  #theme(legend.position = "bottom")
+ggplot(data = hd.temp,
+       aes(x=  ,y=ER,color=factor(avg.temp))) +
+  geom_jitter(width=0.2,height = 0) +
+  geom_line(data=,
+            aes(y=.fitted),color='black',size=1.2) +
+  geom_ribbon(data=  ,
+              aes(y=.fitted,ymin =`2.5%`, ymax=`97.5%`),alpha=0.3,color='grey')+
+  facet_wrap(~,scales='free_y') +
+  labs(x = "Temp", y = "NOX Emission Rate (g/kg of fuel)")+
+  scale_color_manual(values = c("24" = "skyblue2", "82.5" = "orange2"))+
+  theme_bw() +
+  theme(legend.position = "bottom")
   
 
 ```
