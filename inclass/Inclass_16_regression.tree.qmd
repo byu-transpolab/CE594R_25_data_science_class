@@ -1,0 +1,542 @@
+
+Machine learning with Regression Trees
+
+
+```{r}
+library(tidyverse)
+library(tree)
+library(ISLR)
+library(ggpmisc)
+
+```
+I'm using this as my reference--this is an excellent resource of many topics
+
+<https://www.statlearning.com/>
+
+This is a course with examples based on the text book
+<https://www.science.smith.edu/~jcrouser/SDS293/>
+
+
+
+Step 1. Read in the Data
+
+
+```{r}
+
+summer.ER <- read_rds("../../CE594R_25_data_science_class/data/summer.ER.all.rds")
+
+```
+
+Step 2. Rename my columns
+
+```{r}
+
+summer.ER <- summer.ER %>%
+             rename(VehicleTypeDMV =`Vehicle Type DMV`) %>%
+             rename(WeightRating =`Weight Rating`) %>%
+             mutate(ModelYear = as.numeric(ModelYear)) %>%
+             mutate(ModelYear = if_else(year(DATE)>2023,Year,ModelYear)) %>%
+             mutate(Year = year(DATE))
+
+```
+
+
+Step 2. Filter the Data
+
+Filter to just the known light-duty vehicles, and remove the rest...
+
+We will keep the unknown light-duty vehicles (fuel type, model year, etc) for the comparison of the knowns vs. the unknowns
+
+```{r}
+
+names(summer.ER)
+unique(summer.ER[,c('DATE','location')])
+unique(summer.ER$WeightRating)
+unique(summer.ER$`Registered Weight`)
+
+unique(summer.ER$VehicleTypeDMV)
+unique(summer.ER$VEHICLE_TYPE)
+unique(summer.ER$pollutant)
+unique(summer.ER$location)
+
+```
+Note, there are F350 and Chevy Silverados with Weight rating in 10,000 to 14,000 lbs
+but they are registered to much higher weights.. I think I will just use the weight ratings
+
+
+subset by pollutant
+
+```{r}
+
+summer.ER.LD.NOx <- summer.ER %>%
+                  filter(!is.na(VIN)) %>%
+                  filter(WeightRating %in% c("a. 6,000 and less","b. 6,001 - 10,000","c. 10,001 - 14,000")) %>%
+                  filter(VehicleTypeDMV %in% c("Passenger Vehicle","Truck")) %>%
+                  filter(pollutant == 'NOx' ) %>%
+                  filter(!is.na(ER) & !is.na(vsp)) %>% ## filter out the missing NOx values and missing acceleration
+                  mutate(VehicleTypeDMV = as.factor(VehicleTypeDMV)) %>%
+                  mutate(WeightRating = as.factor(WeightRating)) %>%
+                  mutate(DATE = as.factor(DATE)) %>%
+                  mutate(location = as.factor(location)) %>%
+                  mutate(FuelGroup = as.factor(FuelGroup)) 
+                  
+
+```
+
+
+```{r}
+
+#Identify any missing values
+
+summer.ER.LD.NOx %>%
+  summarise_all(funs(sum(is.na(.))))
+
+
+
+```
+
+Step 3. Plot the data
+
+
+```{r}
+
+ggplot(data=summer.ER.LD.NOx, aes(x = DATE, y = ER, color = location)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) 
+  
+
+
+```
+
+
+
+Step 4. Split the data into a training and test data set
+
+```{r}
+
+names(summer.ER.LD.NOx)
+
+set.seed(1)
+
+LD_train =  summer.ER.LD.NOx %>%
+  sample_frac(.7)
+
+LD_test = summer.ER.LD.NOx %>%
+  setdiff(LD_train)
+
+```
+
+Step 5. Fit a tree
+
+```{r}
+
+LD_tree=tree(ER~DATE+location+FuelGroup+ModelYear+
+               VehicleTypeDMV+WeightRating+
+                 SPEED+ACCEL+vsp, LD_train)
+
+```
+
+Step 5. Summarize tree
+
+```{r}
+
+summary(LD_tree)
+
+plot(LD_tree)
+text(LD_tree, pretty = 0)
+
+```
+
+Step 7. Prune the tree using cross-validation
+
+```{r}
+
+?cv.tree()
+
+cv_LD_tree= cv.tree(LD_tree)
+
+
+plot(cv_LD_tree$size, cv_LD_tree$dev, type = 'b')
+
+
+```
+
+Note, I get a different plot each time I re-run the cv.tree function, sometimes 3 is often pretty good, 6 seems to be a good number
+
+```{r}
+
+prune_LD_tree = prune.tree(LD_tree, 
+                          best = 6)
+plot(prune_LD_tree)
+text(prune_LD_tree, pretty = 0)
+
+
+
+
+```
+
+Step 8. Now we'll use the pruned tree to make predictions on the test set:
+
+```{r}
+
+single_tree_estimate = predict(prune_LD_tree, 
+                               newdata = LD_test) 
+
+
+```
+plot the comparison of the predictions with the actual values
+
+```{r}
+
+ggplot() + 
+  geom_point(aes(x = LD_test$ER, y = single_tree_estimate)) +
+  geom_abline()
+
+mean((single_tree_estimate - LD_test$ER)^2)
+
+
+```
+
+Pretty simple with just three predictors
+
+Step 9. Now we will introduce bagging
+
+```{r}
+library(randomForest)
+
+names(LD_train)
+
+set.seed(1)
+bag_LD = randomForest(ER~DATE+location+FuelGroup+ModelYear+
+                        VehicleTypeDMV+WeightRating+
+                        SPEED+ACCEL+vsp, 
+                          data = LD_train, 
+                          mtry = 9, ntree=50,
+                          importance = TRUE)
+
+
+bag_LD
+
+```
+I calculated the mean of squared residuals below, but it is much different.
+
+I think the difference is the when importance = TRUE, the randomForest is using out-of-bag data to calculate the MSE and the R2.
+
+See here: 
+
+<https://carpentries-incubator.github.io/r-ml-tabular-data/04-Decision-Forests/index.html#:~:text=The%20random%20forest%20RMSE%20is,than%20the%20decision%20tree%20RMSE.&text=The%20Mean%20of%20squared%20residuals,MSE%20on%20the%20testing%20set>
+
+
+```{r}
+
+## predict the emissions from the training data set, and residuals
+bagged_estimate_train = LD_train %>%
+                        mutate(bagged_estimate = predict(bag_LD, 
+                                                         newdata = LD_train)) 
+                         
+# SSE
+SSE <- sum((bagged_estimate_train$bagged_estimate - bagged_estimate_train$ER)^2)
+
+SSE
+# SST
+
+SST <- sum((bagged_estimate_train$ER - mean(bagged_estimate_train$ER))^2)
+SST
+
+SSE/SST
+
+# R^2
+
+R2 <- 1 - SSE/SST
+
+R2
+```
+```{r}
+MSE = mean((bagged_estimate_train$bagged_estimate - bagged_estimate_train$ER)^2)
+MSE
+```
+
+
+Step 10. Determine the most important variables for predicting emissions from individual 
+light-duty vehicles
+
+
+```{r}
+
+?importance()
+
+importance(bag_LD)
+varImpPlot(bag_LD)
+
+
+```
+
+
+Why there are two different metrics?
+
+MSE = Mean Squared Error
+
+MSE = 1/n * sum((y_i - y_i_hat)^2)
+
+%incMSE is the increase in the MSE when one of the predictors are randomly removed (standard deviation of differences) 
+
+IncNode Purity, is the increase in node impurity, for regression measured by the increase in RSS by adding one of the predictors
+
+RSS= Residual Sum of Squares
+
+RSS = sum((y_i - y_i_hat)^2)
+
+
+<https://www.ncl.ac.uk/webtemplate/ask-assets/external/maths-resources/statistics/regression-and-correlation/coefficient-of-determination-r-squared.html>
+
+```{r}
+
+bagged_estimate_test = LD_test %>%
+                        mutate(bagged_estimate = predict(bag_LD, newdata = LD_test))
+
+View(bagged_estimate_test)
+
+# MSE
+mean((bagged_estimate_test$bagged_estimate- bagged_estimate_test$ER)^2)
+
+```
+```{r}
+# SSE
+SSE <- sum((bagged_estimate_test$bagged_estimate - bagged_estimate_test$ER)^2)
+
+# SST
+
+SST <- sum((bagged_estimate_test$ER - mean(bagged_estimate_test$ER))^2)
+
+# R^2
+
+R2 <- 1 - SSE/SST
+
+R2
+```
+
+The R2 is much lower, but it is close to the estimate out of bag estimates from above
+
+```{r}
+
+ggplot() + 
+  geom_point(aes(x = LD_test$ER, y = bagged_estimate)) +
+  geom_abline()
+
+```
+
+
+The model only explains ~6% of the variability of the emissions of each vehicle
+
+Conclusion-- we are quite bad at predicting the emissions from individual vehicles
+But perhaps, we can be ok at predicting the emissions from fleet averages??
+
+Step 11. Now Try a random forest model
+
+```{r}
+
+set.seed(1)
+rf_LD = randomForest(ER~DATE+location+FuelGroup+ModelYear+
+                        VehicleTypeDMV+WeightRating+
+                        SPEED+ACCEL+vsp, 
+                      data = LD_train, 
+                      mtry = 3, 
+                      ntree = 100,
+                      importance = TRUE)
+
+rf_LD
+
+```
+On the out-of-bag data, the random forest explains 13% of the variability in the emissions of each vehicle
+
+Let's look on the test data
+
+```{r}
+
+random_forest_estimate_test = LD_test %>%
+                               mutate(estimate = predict(rf_LD, 
+                                 newdata = LD_test))
+
+
+```
+
+
+Look at fit statistics
+
+```{r}
+
+# MSE
+mean((random_forest_estimate_test$estimate- random_forest_estimate_test$ER)^2)
+
+```
+```{r}
+# SSE
+SSE <- sum((random_forest_estimate_test$estimate - random_forest_estimate_test$ER)^2)
+
+# SST
+
+SST <- sum((random_forest_estimate_test$ER - mean(random_forest_estimate_test$ER))^2)
+
+# R^2
+
+R2 <- 1 - SSE/SST
+
+R2
+```
+
+On the test data, that R2 is also 13%. At least it seems pretty consistent. 
+
+Now, 13% of variation explained,
+MSE only slightly reduced on the test dataset
+
+
+```{r}
+
+ggplot(data=random_forest_estimate_test, aes(x = ER, y = estimate)) + 
+  geom_point() +
+  geom_abline()
+
+```
+
+Look at importance
+
+```{r}
+
+importance(rf_LD)
+varImpPlot(rf_LD)
+
+```
+
+
+now try boosting...
+
+from lab14.Rmd from <https://www.science.smith.edu/~jcrouser/SDS293/>
+
+"We'll use the `gbm` package, and within it the `gbm()` function, to fit **boosted
+regression trees** to the `Boston` data set. We run `gbm()` with the option
+`distribution="gaussian"` since this is a regression problem; if it were a binary
+classification problem, we would use `distribution="bernoulli"`. The
+argument `n.trees=5000` indicates that we want 5000 trees, and the option
+`interaction.depth=4` limits the depth of each tree:"
+
+```{r}
+library(gbm)
+set.seed(1)
+boost_LD = gbm(ER~DATE+location+FuelGroup+ModelYear+
+                 VehicleTypeDMV+WeightRating+
+                 SPEED+ACCEL+vsp, 
+                   data = LD_train, 
+                   distribution = "gaussian", 
+                   n.trees = 1000, 
+                   interaction.depth = 4)
+
+
+```
+
+?gbm
+
+```{r}
+summary(boost_LD)
+```
+
+```{r}
+
+boost_estimate <- LD_test %>%
+                 mutate(estimate = predict(boost_LD,newdata = LD_test))
+
+mean((boost_estimate$estimate - boost_estimate$ER)^2)
+
+ggplot(boost_estimate,aes(x = ER, y =estimate)) + 
+  geom_point() +
+  geom_smooth(method = "lm",  se = FALSE) + 
+  stat_poly_eq(aes(label = paste(after_stat(eq.label),
+                                 after_stat(rr.label), sep = "*\", \"*")),size=4)
+
+
+```
+
+
+```{r}
+
+plot(boost_LD, i = "DATE")
+plot(boost_LD, i = "ModelYear")
+plot(boost_LD, i = "SPEED")
+plot(boost_LD, i = "ACCEL")
+plot(boost_LD, i = "vsp")
+plot(boost_LD, i = "location")
+plot(boost_LD, i = "FuelGroup")
+plot(boost_LD, i = "WeightRating")
+plot(boost_LD, i = "VehicleTypeDMV")
+
+```
+
+Regression Tree Observations: 
+
+Pros: 
+-  I don't have to try to choose the structure of the model
+-  They are optimized to find the best fit
+
+
+Cons:
+  - I don't like how bumpy the predictions are for the regression trees. 
+  
+  - Epecially across vsp, speed, acceleration, it doesn't seem to be any better with more variables
+  
+  -Also the order of the important variables seems to change drastically between different fits
+
+Questions: 
+  -Can I do better with just a GLM? 
+
+   -I don't need to pick the binning of VSP and model years
+   -I can also test if the glm is just as good as the regression trees as the glm?
+
+```{r}
+gam.LD <- mgcv::gam(ER~s(ModelYear) + s(ModelYear,by = location)+s(ModelYear,by=FuelGroup) + s(vsp) + s(vsp,by=DATE), data= LD_train)
+
+
+summary(gam.LD)
+
+```
+```{r}
+
+plot(gam.LD)
+
+```
+
+
+
+Look at fit statistics of GAM model
+
+```{r}
+
+gam_test <-  LD_test %>%
+              mutate(estimate = predict(gam.LD, 
+                                 newdata = LD_test))
+
+
+```
+
+
+
+```{r}
+
+# MSE
+mean((gam_test$estimate- gam_test$ER)^2)
+
+```
+```{r}
+# SSE
+SSE <- sum((gam_test$estimate - gam_test$ER)^2)
+
+# SST
+
+SST <- sum((gam_test$ER - mean(gam_test$ER))^2)
+
+# R^2
+
+R2 <- 1 - SSE/SST
+
+R2
+```
+The GAM model without any serious model selection does almost as well as the boosted random forest model.... My impression is to try to optimize a GAM model for predicting emissions...
+
