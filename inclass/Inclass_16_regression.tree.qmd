@@ -1,6 +1,8 @@
 
 Machine learning with Regression Trees
 
+Show Figure 2.7 from Statistical Learning
+
 
 ```{r}
 library(tidyverse)
